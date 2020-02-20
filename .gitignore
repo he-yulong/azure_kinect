@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+/virtual_idol/main/dnn_model_2_0.onnx
+/virtual_idol/.vs/virtual_idol/v16
+/virtual_idol/packages
+/virtual_idol/fastpointcloud/x64/Release
+/virtual_idol/rgbd_pointcloud/x64/Release
+/virtual_idol/main/x64/Release
+/virtual_idol/eigen_test/x64/Release
+/virtual_idol/camera_space_transform_sample/x64/Release
