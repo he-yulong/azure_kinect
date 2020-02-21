@@ -36,7 +36,7 @@ namespace ws_tech
 		void Close();
 
 	private:
-		const bool is_debug = false;  // 用于测试
+		const bool is_debug = true;  // 用于测试
 		bool has_shifted = false;  // 用于视角平移
 		Eigen::Vector3f shift_vector;  // 用于视角平移
 		py::function process_emotion;
@@ -53,6 +53,7 @@ namespace ws_tech
 		k4abt_tracker_t tracker;
 		k4abt_tracker_configuration_t tracker_config;
 		k4abt_frame_t body_frame;
+		k4abt_skeleton_t skeleton;
 
 		// UDP 发送器
 		UDPSender udp_sender;

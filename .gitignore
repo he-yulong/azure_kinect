@@ -38,3 +38,7 @@
 /virtual_idol/main/x64/Release
 /virtual_idol/eigen_test/x64/Release
 /virtual_idol/camera_space_transform_sample/x64/Release
+/virtual_idol/camera_space_transform_sample/dnn_model_2_0.onnx
+/virtual_idol/eigen_test/dnn_model_2_0.onnx
+/virtual_idol/x64/Release/face_capture
+/virtual_idol/x64/Release/__pycache__

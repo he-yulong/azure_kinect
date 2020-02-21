@@ -21,12 +21,13 @@ std::optional<Samples::Vector> Samples::TryEstimateGravityVectorForDepthCamera(
     if (std::abs(imuAcc.Length() - 9.81f) < 0.2f)
     {
         // Extrinsic Rotation from ACCEL to DEPTH.
+        // 已经从加速度仪器坐标系转换到了深度相机坐标系
         const auto& R = sensorCalibration.extrinsics[K4A_CALIBRATION_TYPE_ACCEL][K4A_CALIBRATION_TYPE_DEPTH].rotation;
 
         Samples::Vector Rx = { R[0], R[1], R[2] };
         Samples::Vector Ry = { R[3], R[4], R[5] };
         Samples::Vector Rz = { R[6], R[7], R[8] };
-        Samples::Vector depthAcc = { Rx.Dot(imuAcc), Ry.Dot(imuAcc) , Rz.Dot(imuAcc) };
+        Samples::Vector depthAcc = { Rx.Dot(imuAcc), Ry.Dot(imuAcc), Rz.Dot(imuAcc) };
 
         // The acceleration due to gravity, g, is in a direction toward the ground.
         // However an accelerometer at rest in a gravity field reports upward acceleration
@@ -131,7 +132,7 @@ std::optional<Samples::Plane> Samples::FloorDetector::TryDetectFloorPlane(
     const k4a_calibration_t& sensorCalibration,
     size_t minimumFloorPointCount)
 {
-    auto gravity = TryEstimateGravityVectorForDepthCamera(imuSample, sensorCalibration);
+    auto gravity = TryEstimateGravityVectorForDepthCamera(imuSample, sensorCalibration);  // 得到重力加速度向量，基于深度相机坐标系
     if (gravity.has_value() && !cloudPoints.empty())
     {
         // Up normal is opposite to gravity down vector.

@@ -399,8 +399,8 @@ void ws_tech::SingleKinect::processBodyFrame()
 		return;  // 如果检测不到人，则什么也不做
 	}
 
-	k4abt_skeleton_t skeleton;
 	k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, 0, &skeleton);
+	return; std::cout << "something wrong!!" << std::endl;
 
 	if (skeleton_result == K4A_RESULT_SUCCEEDED)
 	{
@@ -514,27 +514,47 @@ void ws_tech::SingleKinect::updateFloorResult(Samples::PointCloudGenerator& poin
 
 		// Detect floor plane based on latest visual and inertial observations.
 		const size_t minimumFloorPointCount = 1024 / (downsampleStep * downsampleStep);
+		// 核心代码，通过 floor_detector 获取地面对象。
+		// 所需参数：cloudPoints 包含深度图的信息、imu_sample 包含 IMU 信息、标定信息、最小地面点数量（256）
 		const auto& maybeFloorPlane = floor_detector.TryDetectFloorPlane(cloudPoints, imu_sample, sensor_calibration, minimumFloorPointCount);
 
-		// Visualize point cloud.
-		//window3d.UpdatePointClouds(depthImage);
-
-		// Visualize the floor plane.
 		if (maybeFloorPlane.has_value())
 		{
 			// For visualization purposes, make floor origin the projection of a point 1.5m in front of the camera.
+			// 把相机前方 1.5 米处对地面的投影，作为原点。
+			//Samples::Vector cameraOrigin = { 0, 0, 0 };
+			//Samples::Vector cameraForward = { 0, 0, 1 };
+
+			//auto p = maybeFloorPlane->ProjectPoint(cameraOrigin) + maybeFloorPlane->ProjectVector(cameraForward) * 1.5f;
+			//auto n = maybeFloorPlane->Normal;
+
 			Samples::Vector cameraOrigin = { 0, 0, 0 };
 			Samples::Vector cameraForward = { 0, 0, 1 };
 
 			auto p = maybeFloorPlane->ProjectPoint(cameraOrigin) + maybeFloorPlane->ProjectVector(cameraForward) * 1.5f;
 			auto n = maybeFloorPlane->Normal;
 
-			std::cout << "地面检测 n.X ：" << n.X << std::endl;
+			auto new_plane = Samples::Plane::Create(n, p);
+
+			auto feet_position = skeleton.joints[K4ABT_JOINT_FOOT_RIGHT].position;
+			//auto feet_position = skeleton.joints[K4ABT_JOINT_NECK].position;
+			//auto feet_v = Samples::Vector(feet_position.xyz.x, feet_position.xyz.y, feet_position.xyz.z) / 1000.;
+			//auto feet_v = Samples::Vector(-feet_position.xyz.z, -feet_position.xyz.x, feet_position.xyz.y) / 1000.;
+			auto feet_v = Samples::Vector(feet_position.xyz.x, feet_position.xyz.y, feet_position.xyz.z) / 1000.;
+			//feet_v = Samples::Vector(0.100295, 0.764273, 3.57122);
+			std::cout << "maybeFloorPlane信息："
+				<< "Normal=[" << maybeFloorPlane->Normal.X << ", " << maybeFloorPlane->Normal.Y << ", " << maybeFloorPlane->Normal.Z << "]\n"
+				<< "Origin=[" << maybeFloorPlane->Origin.X << "," << maybeFloorPlane->Origin.Y << "," << maybeFloorPlane->Origin.Z << "]\n"
+				<< "C/W=" << maybeFloorPlane->C << std::endl;
+			std::cout << "脚的坐标：[" << feet_v.X << ", " << feet_v.Y << ", " << feet_v.Z << "]" << std::endl;
+			auto distance = (feet_v.X * new_plane.Normal.X + feet_v.Y * new_plane.Normal.Y + feet_v.Z * new_plane.Normal.Z + new_plane.C) / new_plane.Normal.Length();
+			//auto distance = new_plane.AbsDistance(feet_v);
+			std::cout << "脚离检测地面的距离：" << distance << std::endl;
 			//window3d.SetFloorRendering(true, p.X, p.Y, p.Z, n.X, n.Y, n.Z);
 		}
 		else
 		{
-			//window3d.SetFloorRendering(false, 0, 0, 0);
+			std::cout << "Floor plane not detected. Wait..." << std::endl;
 		}
 	}
 }
