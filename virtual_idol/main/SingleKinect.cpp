@@ -400,7 +400,7 @@ void ws_tech::SingleKinect::processBodyFrame()
 	}
 
 	k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, 0, &skeleton);
-	return; std::cout << "something wrong!!" << std::endl;
+	//return; std::cout << "something wrong!!" << std::endl;
 
 	if (skeleton_result == K4A_RESULT_SUCCEEDED)
 	{

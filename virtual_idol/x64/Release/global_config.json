@@ -1,0 +1,11 @@
+{
+  "IMAGE_SIZE": 192,
+  "CAMERA_SIZE": [600, 480],
+  "scale_size": 6,
+  "sample_rate": 7,
+  "bs_rate": 30,
+  "IP": "127.0.0.1",
+  "port": 8999,
+  "USE_GPU": 0,
+  "DEVICE_INDEX": "0"
+}

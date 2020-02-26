@@ -9,6 +9,7 @@
 
 #include <vector>
 
+//  点云的数据结构
 struct color_point_t
 {
     int16_t xyz[3];
@@ -19,7 +20,7 @@ void tranformation_helpers_write_point_cloud(const k4a_image_t point_cloud_image
                                              const k4a_image_t color_image,
                                              const char *file_name)
 {
-    std::vector<color_point_t> points;
+    std::vector<color_point_t> points;  // 点云的数组
 
     int width = k4a_image_get_width_pixels(point_cloud_image);
     int height = k4a_image_get_height_pixels(color_image);

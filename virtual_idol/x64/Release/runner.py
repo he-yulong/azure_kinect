@@ -3,12 +3,11 @@ sys.path.append('./')
 import main
 from stream_interface import interface
 
-def hello(frame):
-  print("hello")
-  print(frame)
-
+def f1(data):
+    print('hello')
+    return []
 
 sk = main.SingleKinect(interface, 0)
 sk.Open()
-sk.Running(500)
+sk.Running(600)
 sk.Close()

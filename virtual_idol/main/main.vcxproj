@@ -84,8 +84,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(OPENCV_DIR)\..\..\include;$(ProjectDir)include;D:\ProgramDev\Anaconda3\envs\virtual_idol\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(OPENCV_DIR)\lib;D:\ProgramDev\Anaconda3\envs\virtual_idol\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(OPENCV_DIR)\..\..\include;$(ProjectDir)include;D:\develop\Anaconda3\envs\bundle2_pip\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OPENCV_DIR)\lib;D:\develop\Anaconda3\envs\bundle2_pip\libs;$(LibraryPath)</LibraryPath>
     <TargetExt>.pyd</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

@@ -1,0 +1,24 @@
+{
+  "left_eye": {
+    "alpha": 1.0,
+    "beta": 0.7,
+    "power": 5
+  },
+  "right_eye": {
+    "alpha": 1.0,
+    "beta": 0.7,
+    "power": 5
+  },
+  "left_brow": {
+    "scale": 1.0
+  },
+  "right_brow": {
+    "scale": 1.0
+  },
+  "left_mouthMove": {
+    "scale": 1.0
+  },
+  "right_mouthMove": {
+    "scale": 1.0
+  }
+}

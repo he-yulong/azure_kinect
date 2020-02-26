@@ -14,9 +14,11 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
     const k4a_image_t color_image,
     std::string file_name)
 {
-    int depth_image_width_pixels = k4a_image_get_width_pixels(depth_image);
-    int depth_image_height_pixels = k4a_image_get_height_pixels(depth_image);
+    int depth_image_width_pixels = k4a_image_get_width_pixels(depth_image);  // 深度图的宽
+    int depth_image_height_pixels = k4a_image_get_height_pixels(depth_image);  // 深度图的高
     k4a_image_t transformed_color_image = NULL;
+
+    // 创建一张与深度图大小相同的 BGRA 的图
     if (K4A_RESULT_SUCCEEDED != k4a_image_create(K4A_IMAGE_FORMAT_COLOR_BGRA32,
         depth_image_width_pixels,
         depth_image_height_pixels,
@@ -27,6 +29,7 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
         return false;
     }
 
+    // 创建一张与深度图大小相同的 XYZ 的图
     k4a_image_t point_cloud_image = NULL;
     if (K4A_RESULT_SUCCEEDED != k4a_image_create(K4A_IMAGE_FORMAT_CUSTOM,
         depth_image_width_pixels,
@@ -38,6 +41,13 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
         return false;
     }
 
+    // 把彩色图转换为深度相机的几何
+    // This produces a color image for which each pixel matches the corresponding pixel coordinates of the depth camera.
+    // 转换后的彩色图的每一个像素都对应着深度相机的每个像素坐标
+    // depth_image and color_image need to represent the same moment in time. The depth data will be applied to the color image to properly warp the color data to the perspective of the depth camera.
+    // depth_image must be of type K4A_IMAGE_FORMAT_DEPTH16. color_image must be of format K4A_IMAGE_FORMAT_COLOR_BGRA32.
+    // transformed_color_image image must be of format K4A_IMAGE_FORMAT_COLOR_BGRA32. transformed_color_image must have the width and height of the depth camera in the mode specified by the k4a_calibration_t used to create the transformation_handle with k4a_transformation_create().
+    // transformed_color_image should be created by the caller using k4a_image_create() or k4a_image_create_from_buffer().
     if (K4A_RESULT_SUCCEEDED != k4a_transformation_color_image_to_depth_camera(transformation_handle,
         depth_image,
         color_image,
@@ -47,6 +57,10 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
         return false;
     }
 
+    // Transforms the depth image into 3 planar images representing X, Y and Z-coordinates of corresponding 3D points.
+    // The format of xyz_image must be K4A_IMAGE_FORMAT_CUSTOM. The width and height of xyz_image must match the width and height of depth_image.
+    // xyz_image must have a stride in bytes of at least 6 times its width in pixels.
+    // Each pixel of the xyz_image consists of three int16_t values, totaling 6 bytes. The three int16_t values are the X, Y, and Z values of the point.
     if (K4A_RESULT_SUCCEEDED != k4a_transformation_depth_image_to_point_cloud(transformation_handle,
         depth_image,
         K4A_CALIBRATION_TYPE_DEPTH,
@@ -56,6 +70,7 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
         return false;
     }
 
+    // 写入文件
     tranformation_helpers_write_point_cloud(point_cloud_image, transformed_color_image, file_name.c_str());
 
     k4a_image_release(transformed_color_image);
@@ -66,20 +81,20 @@ static bool point_cloud_color_to_depth(k4a_transformation_t transformation_handl
 
 static int capture(std::string output_dir, int frames)
 {
-    uint8_t deviceId = K4A_DEVICE_DEFAULT;
+    uint8_t deviceId = K4A_DEVICE_DEFAULT;  // 设备 ID
     int returnCode = 1;
     k4a_device_t device = NULL;
-    const int32_t TIMEOUT_IN_MS = 1000;
-    k4a_transformation_t transformation = NULL;
+    const int32_t TIMEOUT_IN_MS = 1000;  // 定义延时时间
+    k4a_transformation_t transformation = NULL;  // 用于坐标系变换
     k4a_capture_t capture = NULL;
     std::string file_name = "";
-    uint32_t device_count = 0;
+    uint32_t device_count = 0;  // 设备数量，仅用于判断有无设备
     k4a_device_configuration_t config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
     k4a_image_t depth_image = NULL;
     k4a_image_t color_image = NULL;
     int i = 0;
     int z = 0;
-    k4a_capture_t* captures = new k4a_capture_t[frames];
+    k4a_capture_t* captures = new k4a_capture_t[frames];  // 保存帧的数组
 
     device_count = k4a_device_get_installed_count();
 
@@ -116,6 +131,8 @@ static int capture(std::string output_dir, int frames)
         printf("Failed to start cameras\n");
         goto Exit;
     }
+
+    // 先进行捕获
     for (i; i < frames; i++)
     {
         // Get a capture
@@ -134,6 +151,8 @@ static int capture(std::string output_dir, int frames)
         printf("Frame Captured\n");
     }
     printf("Processing Frames...\n");
+
+    // 捕获之后再依次获取彩色图和深度图
     for (z; z < frames; z++)
     {
         // Get a depth image
@@ -207,6 +226,7 @@ int main(int argc, char** argv)
         {
             if (argc == 4)
             {
+                // 把存储路径和帧数传过去
                 returnCode = capture(argv[2], std::atoi(argv[3]));
             }
             else

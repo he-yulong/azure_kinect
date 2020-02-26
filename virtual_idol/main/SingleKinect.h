@@ -36,7 +36,7 @@ namespace ws_tech
 		void Close();
 
 	private:
-		const bool is_debug = true;  // 用于测试
+		const bool is_debug = false;  // 用于测试
 		bool has_shifted = false;  // 用于视角平移
 		Eigen::Vector3f shift_vector;  // 用于视角平移
 		py::function process_emotion;
