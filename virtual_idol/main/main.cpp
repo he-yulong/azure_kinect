@@ -14,7 +14,7 @@ PYBIND11_MODULE(main, m) {
 
     // Creating bindings for a custom type
     py::class_<ws_tech::SingleKinect>(m, "SingleKinect")
-        .def(py::init<py::function, int>())
+        .def(py::init<py::function, int, std::string, int>())
         .def("Open", &ws_tech::SingleKinect::Open)
         .def("Running", &ws_tech::SingleKinect::Running)
         .def("Close", &ws_tech::SingleKinect::Close);

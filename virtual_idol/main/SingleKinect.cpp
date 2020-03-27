@@ -1,7 +1,7 @@
 #include "SingleKinect.h"
 
 // 初始化私有成员
-ws_tech::SingleKinect::SingleKinect(py::function process_emotion_val, int device_index_val) :
+ws_tech::SingleKinect::SingleKinect(py::function process_emotion_val, int device_index_val, std::string ip_addr, int udp_port) :
 	process_emotion(process_emotion_val),
 	device_index(device_index_val),
 	device(nullptr),
@@ -13,7 +13,7 @@ ws_tech::SingleKinect::SingleKinect(py::function process_emotion_val, int device
 	tracker(NULL),
 	tracker_config(K4ABT_TRACKER_CONFIG_DEFAULT),
 	body_frame(NULL),
-	udp_sender(ws_tech::UDPSender("127.0.0.1", 8999))
+	udp_sender(ws_tech::UDPSender(ip_addr, udp_port))
 {}
 
 // 打开并启动 Kinect
@@ -193,10 +193,10 @@ void ws_tech::SingleKinect::Running(int max_frame)
 			updateEmotionResult(); // 表情识别
 			k4a_image_release(color_image);
 
-			depth_image = k4a_capture_get_depth_image(sensor_capture);
-			updateFloorResult(point_cloud_generator); // 地面检测
+			//depth_image = k4a_capture_get_depth_image(sensor_capture);
+			//updateFloorResult(point_cloud_generator); // 地面检测
 			if (updateBodyTrackingResult() == false) break; // 姿态识别
-			k4a_image_release(depth_image);
+			//k4a_image_release(depth_image);
 
 			k4a_capture_release(sensor_capture);
 		}
@@ -277,18 +277,18 @@ void ws_tech::SingleKinect::updateEmotionResult()
 
 	cv::Mat color_frame = cv::Mat(k4a_image_get_height_pixels(color_image), k4a_image_get_width_pixels(color_image), CV_8UC4, k4a_image_get_buffer(color_image));  // 还可以使用 CV_8UC4，4通道数
 
-			// 对彩色图片进行预处理
+	// 对彩色图片进行预处理
 	cv::cvtColor(color_frame, color_frame, cv::COLOR_BGRA2BGR);
-	cv::Mat dst = cv::Mat(720, 1280, color_frame.type());
-	cv::resize(color_frame, dst, dst.size(), 0, 0, cv::INTER_LINEAR);
-	py::array_t<unsigned char> arr = cv_mat_uint8_3c_to_numpy(dst);
+	//cv::Mat dst = cv::Mat(720, 1280, color_frame.type());
+	//cv::resize(color_frame, dst, dst.size(), 0, 0, cv::INTER_LINEAR);
+	//py::array_t<unsigned char> arr = cv_mat_uint8_3c_to_numpy(dst);
+	py::array_t<unsigned char> arr = cv_mat_uint8_3c_to_numpy(color_frame);
 	// 调用外部 Python 环境进行表情识别
 	py::list result = process_emotion(arr);
-	std::cout << "表情数据：" << result << std::endl;
+	//std::cout << "表情数据：" << result << std::endl;
 
 	//cv::imshow("测试 color 相机 1 ", dst);  // 测试
 	//cv::imshow("测试 color 相机 1 ", numpy_uint8_3c_to_cv_mat(arr));  // 测试
-
 
 }
 
@@ -400,7 +400,6 @@ void ws_tech::SingleKinect::processBodyFrame()
 	}
 
 	k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, 0, &skeleton);
-	//return; std::cout << "something wrong!!" << std::endl;
 
 	if (skeleton_result == K4A_RESULT_SUCCEEDED)
 	{
@@ -485,6 +484,7 @@ void ws_tech::SingleKinect::processBodyFrame()
 			ss << result.coeffs()(1, 0) << " ";
 			ss << result.coeffs()(2, 0) << ", ";
 		}
+		ss << " | 0,";
 
 		// Send results with UDP
 		udp_sender.Send(ss.str());

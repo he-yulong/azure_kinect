@@ -30,7 +30,7 @@ namespace ws_tech
 	class SingleKinect
 	{
 	public:
-		SingleKinect(py::function process_emotion_val, int device_index_val = 0);
+		SingleKinect(py::function process_emotion_val, int device_index_val = 0, std::string ip_addr="127.0.0.1", int udp_port=8999);
 		void Open();
 		void Running(int max_frame = 200);
 		void Close();

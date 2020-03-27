@@ -9,7 +9,7 @@
 
 #include <vector>
 
-//  点云的数据结构
+//  点云的数据结构（RGB 和 XYZ）
 struct color_point_t
 {
     int16_t xyz[3];
@@ -57,19 +57,25 @@ void tranformation_helpers_write_point_cloud(const k4a_image_t point_cloud_image
 #define PLY_ASCII "format ascii 1.0"
 #define PLY_ELEMENT_VERTEX "element vertex"
 
-    // save to the ply file
-    std::ofstream ofs(file_name); // text mode first
-    ofs << PLY_START_HEADER << std::endl;
-    ofs << PLY_ASCII << std::endl;
-    ofs << PLY_ELEMENT_VERTEX << " " << points.size() << std::endl;
-    ofs << "property float x" << std::endl;
-    ofs << "property float y" << std::endl;
-    ofs << "property float z" << std::endl;
-    ofs << "property uchar red" << std::endl;
-    ofs << "property uchar green" << std::endl;
-    ofs << "property uchar blue" << std::endl;
-    ofs << PLY_END_HEADER << std::endl;
-    ofs.close();
+    bool is_ply = false;
+
+    if (is_ply)
+    {
+        // save to the ply file
+        std::ofstream ofs(file_name); // text mode first
+        ofs << PLY_START_HEADER << std::endl;
+        ofs << PLY_ASCII << std::endl;
+        ofs << PLY_ELEMENT_VERTEX << " " << points.size() << std::endl;
+        ofs << "property float x" << std::endl;
+        ofs << "property float y" << std::endl;
+        ofs << "property float z" << std::endl;
+        ofs << "property uchar red" << std::endl;
+        ofs << "property uchar green" << std::endl;
+        ofs << "property uchar blue" << std::endl;
+        ofs << PLY_END_HEADER << std::endl;
+        ofs.close();
+    }
+    
 
     std::stringstream ss;
     for (size_t i = 0; i < points.size(); ++i)
@@ -79,6 +85,6 @@ void tranformation_helpers_write_point_cloud(const k4a_image_t point_cloud_image
         ss << " " << (float)points[i].rgb[2] << " " << (float)points[i].rgb[1] << " " << (float)points[i].rgb[0];
         ss << std::endl;
     }
-    std::ofstream ofs_text(file_name, std::ios::out | std::ios::app);
+    std::ofstream ofs_text(file_name, std::ios::out);
     ofs_text.write(ss.str().c_str(), (std::streamsize)ss.str().length());
 }

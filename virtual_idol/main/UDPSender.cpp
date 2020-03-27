@@ -26,6 +26,6 @@ ws_tech::UDPSender::~UDPSender()
 void ws_tech::UDPSender::Send(std::string data)
 {
 	char* cdata = (char*)(data.data());
-	std::printf("[%zd]: %s\n", strlen(cdata), cdata);
+	//std::printf("[%zd]: %s\n", strlen(cdata), cdata);
 	sendto(sendSocket, cdata, strlen(cdata), 0, (SOCKADDR*)&recvAddr, sizeof(recvAddr));
 }

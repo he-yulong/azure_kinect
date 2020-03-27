@@ -172,7 +172,7 @@ static int capture(std::string output_dir, int frames)
         }
 
         // Compute color point cloud by warping color image into depth camera geometry
-        file_name = output_dir + "\\" + std::to_string(z) + ".ply";
+        file_name = output_dir + "\\" + std::to_string(z) + ".xyz";
         if (point_cloud_color_to_depth(transformation, depth_image, color_image, file_name.c_str()) == false)
         {
             goto Exit;
