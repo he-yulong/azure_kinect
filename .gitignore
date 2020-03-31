@@ -43,3 +43,12 @@
 /virtual_idol/x64/Release/face_capture
 /virtual_idol/x64/Release/__pycache__
 /virtual_idol/x64/Release/dnn_model_2_0.onnx
+/kinect_scan/.vs/kinect_scan/v16
+/kinect_scan/mocap/x64/Release
+/kinect_scan/x64/Release
+/livescan/.vs/LiveScan/v16
+/livescan/bin
+/livescan/ICP/x64
+/livescan/LiveScanClient/x64
+/livescan/packages
+/livescan/LiveScanClient/dnn_model_2_0.onnx

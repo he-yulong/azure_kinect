@@ -20,10 +20,11 @@ def interface(img):
     if not face_img is None:
         #cv2.imshow("test", face_img);  # test
         #cv2.waitKey(10)
-        result = create_data_camera_unreal(face_img)
+        #result = create_data_camera_unreal(face_img)
         #print(result)
-        #send_socket(create_data_camera(face_img))
-        return result
+        send_socket(create_data_camera(face_img))
+        #return result
+        return []
     return []
 
 if __name__ == "__main__":

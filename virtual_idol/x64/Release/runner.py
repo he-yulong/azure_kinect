@@ -9,5 +9,5 @@ def f1(data):
 
 sk = main.SingleKinect(interface, 0)
 sk.Open()
-sk.Running(600)
+sk.Running(1000)
 sk.Close()

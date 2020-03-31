@@ -1,8 +1,6 @@
-from distutils.core import setup
-from Cython.Build import cythonize
-
-
-setup(
-    name="dll_test",
-    ext_modules=cythonize("dlltest.py")
-)
+from cx_Freeze import setup, Executable 
+  
+setup(name = "heyulong" , 
+      version = "0.1.0" , 
+      description = "" , 
+      executables = [Executable("runner.py")]) 
