@@ -15,23 +15,26 @@
 #pragma once
 
 #include "utils.h"
+#include <k4abttypes.h>
 
-struct Joint
-{
-
-};
+typedef k4abt_joint_t Joint;
+//struct Joint
+//{
+//
+//};
 
 struct Body
 {
+	bool bTracked;
+	std::vector<Joint> vJoints;
+	std::vector<Point2f> vJointsInColorSpace;
+
 	Body()
 	{
 		bTracked = false;
 		vJoints.resize(5);
 		vJointsInColorSpace.resize(5);
 	}
-	bool bTracked;
-	std::vector<Joint> vJoints;
-	std::vector<Point2f> vJointsInColorSpace;
 };
 
 class ICapture

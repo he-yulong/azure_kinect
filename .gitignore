@@ -52,3 +52,5 @@
 /livescan/LiveScanClient/x64
 /livescan/packages
 /livescan/LiveScanClient/dnn_model_2_0.onnx
+/livescan/LiveScanPlayer/obj
+/livescan/LiveScanServer/obj

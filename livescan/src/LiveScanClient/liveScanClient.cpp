@@ -147,7 +147,7 @@ int LiveScanClient::Run(HINSTANCE hInstance, int nCmdShow)
     // Show window
     ShowWindow(hWndApp, nCmdShow);
 
-	std::thread t1(&LiveScanClient::SocketThreadFunction, this);
+	std::thread socket_thread(&LiveScanClient::SocketThreadFunction, this);
     // Main message loop
     while (WM_QUIT != msg.message)
     {
@@ -171,7 +171,7 @@ int LiveScanClient::Run(HINSTANCE hInstance, int nCmdShow)
     }
 
 	m_bSocketThread = false;
-	t1.join();
+	socket_thread.join();
     return static_cast<int>(msg.wParam);
 }
 
@@ -710,28 +710,29 @@ void LiveScanClient::StoreFrame(Point3f *vertices, RGB *colorInDepth, vector<Bod
 		}
 	}
 
+	// 修改了数据结构
 	vector<Body> tempBodies = bodies;
 
-	//for (unsigned int i = 0; i < tempBodies.size(); i++)
-	//{
-	//	for (unsigned int j = 0; j < tempBodies[i].vJoints.size(); j++)
-	//	{
-	//		if (calibration.bCalibrated)
-	//		{
-	//			tempBodies[i].vJoints[j].Position.X += calibration.worldT[0];
-	//			tempBodies[i].vJoints[j].Position.Y += calibration.worldT[1];
-	//			tempBodies[i].vJoints[j].Position.Z += calibration.worldT[2];
+	for (unsigned int i = 0; i < tempBodies.size(); i++)
+	{
+		for (unsigned int j = 0; j < tempBodies[i].vJoints.size(); j++)
+		{
+			if (calibration.bCalibrated)
+			{
+				tempBodies[i].vJoints[j].position.xyz.x += calibration.worldT[0];
+				tempBodies[i].vJoints[j].position.xyz.y += calibration.worldT[1];
+				tempBodies[i].vJoints[j].position.xyz.z += calibration.worldT[2];
 
-	//			Point3f tempPoint(tempBodies[i].vJoints[j].Position.X, tempBodies[i].vJoints[j].Position.Y, tempBodies[i].vJoints[j].Position.Z);
+				Point3f tempPoint(tempBodies[i].vJoints[j].position.xyz.x, tempBodies[i].vJoints[j].position.xyz.y, tempBodies[i].vJoints[j].position.xyz.z);
 
-	//			tempPoint = RotatePoint(tempPoint, calibration.worldR);
+				tempPoint = RotatePoint(tempPoint, calibration.worldR);
 
-	//			tempBodies[i].vJoints[j].Position.X = tempPoint.X;
-	//			tempBodies[i].vJoints[j].Position.Y = tempPoint.Y;
-	//			tempBodies[i].vJoints[j].Position.Z = tempPoint.Z;
-	//		}
-	//	}
-	//}
+				tempBodies[i].vJoints[j].position.xyz.x = tempPoint.X;
+				tempBodies[i].vJoints[j].position.xyz.y = tempPoint.Y;
+				tempBodies[i].vJoints[j].position.xyz.z = tempPoint.Z;
+			}
+		}
+	}
 
 	if (m_bFilter)
 		filter(goodVertices, goodColorPoints, m_nFilterNeighbors, m_fFilterThreshold);
