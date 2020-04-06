@@ -127,34 +127,37 @@ bool AzureKinectCapture::AcquireFrame()
 	memcpy(pColorRGBX, k4a_image_get_buffer(colorImage), nColorFrameWidth * nColorFrameHeight * sizeof(RGB));
 	memcpy(pDepth, k4a_image_get_buffer(depthImage), nDepthFrameHeight * nDepthFrameWidth * sizeof(UINT16));
 
-	{
-		k4abt_tracker_t tracker{NULL};
-		k4a_wait_result_t queue_capture_result = k4abt_tracker_enqueue_capture(tracker, capture, K4A_WAIT_INFINITE);
-		if (queue_capture_result == K4A_WAIT_RESULT_TIMEOUT)
-		{
-			// It should never hit timeout when K4A_WAIT_INFINITE is set.
-			printf("Error! Add capture to tracker process queue timeout!\n");
-		}
-		else if (queue_capture_result == K4A_WAIT_RESULT_FAILED)
-		{
-			printf("Error! Add capture to tracker process queue failed!\n");
-		}
+	GetBodyFrame(capture);
+	//GetBodyIndexFrame(capture);
 
-		k4abt_frame_t body_frame{ NULL };
-		k4a_wait_result_t pop_frame_result = k4abt_tracker_pop_result(tracker, &body_frame, K4A_WAIT_INFINITE);
-		if (pop_frame_result == K4A_WAIT_RESULT_SUCCEEDED)
-		{
-			// Successfully popped the body tracking result. Start your processing
-			size_t num_bodies = k4abt_frame_get_num_bodies(body_frame);
-			// std::cout << num_bodies << "bodies are detected!" << std::endl;
+	//{
+	//	k4abt_tracker_t tracker{NULL};
+	//	k4a_wait_result_t queue_capture_result = k4abt_tracker_enqueue_capture(tracker, capture, K4A_WAIT_INFINITE);
+	//	if (queue_capture_result == K4A_WAIT_RESULT_TIMEOUT)
+	//	{
+	//		// It should never hit timeout when K4A_WAIT_INFINITE is set.
+	//		printf("Error! Add capture to tracker process queue timeout!\n");
+	//	}
+	//	else if (queue_capture_result == K4A_WAIT_RESULT_FAILED)
+	//	{
+	//		printf("Error! Add capture to tracker process queue failed!\n");
+	//	}
+
+	//	k4abt_frame_t body_frame{ NULL };
+	//	k4a_wait_result_t pop_frame_result = k4abt_tracker_pop_result(tracker, &body_frame, K4A_WAIT_INFINITE);
+	//	if (pop_frame_result == K4A_WAIT_RESULT_SUCCEEDED)
+	//	{
+	//		// Successfully popped the body tracking result. Start your processing
+	//		size_t num_bodies = k4abt_frame_get_num_bodies(body_frame);
+	//		// std::cout << num_bodies << "bodies are detected!" << std::endl;
 
 			//if (num_bodies <= 0)
 			//{
 			//	return true;  // 如果检测不到人，则什么也不做
 			//}
 
-			k4abt_skeleton_t skeleton;
-			k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, 0, &skeleton);
+			//k4abt_skeleton_t skeleton;
+			//k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, 0, &skeleton);
 
 			//if (skeleton_result == K4A_RESULT_SUCCEEDED)
 			//{
@@ -249,22 +252,206 @@ bool AzureKinectCapture::AcquireFrame()
 			//	std::cout << "Error! Get body skeleton failed!" << std::endl;
 			//}
 
-			k4abt_frame_release(body_frame);
-		}
-		else if (pop_frame_result == K4A_WAIT_RESULT_TIMEOUT)
-		{
-			//  It should never hit timeout when K4A_WAIT_INFINITE is set.
-			printf("Error! Pop body frame result timeout!\n");
-		}
-		else
-		{
-			printf("Pop body frame result failed!\n");
-		}
-	}
+	//		k4abt_frame_release(body_frame);
+	//	}
+	//	else if (pop_frame_result == K4A_WAIT_RESULT_TIMEOUT)
+	//	{
+	//		//  It should never hit timeout when K4A_WAIT_INFINITE is set.
+	//		printf("Error! Pop body frame result timeout!\n");
+	//	}
+	//	else
+	//	{
+	//		printf("Pop body frame result failed!\n");
+	//	}
+	//}
 
 	k4a_capture_release(capture);
 
 	return true;
+}
+
+void AzureKinectCapture::GetBodyFrame(k4a_capture_t& capture)
+{
+	k4abt_tracker_t tracker{ NULL };
+	k4a_wait_result_t queue_capture_result = k4abt_tracker_enqueue_capture(tracker, capture, K4A_WAIT_INFINITE);
+	if (queue_capture_result == K4A_WAIT_RESULT_TIMEOUT)
+	{
+		// It should never hit timeout when K4A_WAIT_INFINITE is set.
+		printf("Error! Add capture to tracker process queue timeout!\n");
+	}
+	else if (queue_capture_result == K4A_WAIT_RESULT_FAILED)
+	{
+		printf("Error! Add capture to tracker process queue failed!\n");
+	}
+
+	k4abt_frame_t body_frame{ NULL };
+	k4a_wait_result_t pop_frame_result = k4abt_tracker_pop_result(tracker, &body_frame, K4A_WAIT_INFINITE);
+	if (pop_frame_result == K4A_WAIT_RESULT_SUCCEEDED)
+	{
+		// Successfully popped the body tracking result. Start your processing
+		size_t num_bodies = k4abt_frame_get_num_bodies(body_frame);
+
+		if (num_bodies <= 0)
+		{
+			return;  // 如果检测不到人，则什么也不做
+		}
+
+		k4abt_skeleton_t skeleton;
+		vBodies = std::vector<Body>(num_bodies);
+
+		for (int i = 0; i < num_bodies; i++)
+		{
+			k4a_result_t skeleton_result = k4abt_frame_get_body_skeleton(body_frame, i, &skeleton);
+			if (skeleton_result == K4A_RESULT_SUCCEEDED)
+			{
+				vBodies[i].vJoints.assign(skeleton.joints, skeleton.joints + 32);
+				if (TRUE)
+					vBodies[i].bTracked = true;
+				else
+					vBodies[i].bTracked = false;
+
+				vBodies[i].vJointsInColorSpace.resize(32);
+
+				//for (int j = 0; j < 32; j++)
+				//{
+				//	ColorSpacePoint tempPoint;
+				//	pCoordinateMapper->MapCameraPointToColorSpace(joints[j].Position, &tempPoint);
+				//	vBodies[i].vJointsInColorSpace[j].X = tempPoint.X;
+				//	vBodies[i].vJointsInColorSpace[j].Y = tempPoint.Y;
+				//}
+					//// Successfully get skeleton for the i-th person. Start processing.
+					//std::vector<k4abt_joint_t> skeleton_matrix;
+					//// 把 BodyTracking API 算出的关节点数据放到了 skeleton_matrix 中
+					//// skeleton_matrix 是 vector<k4abt_joint_t> 类型的成员变量
+					//for (int i = 0; i < K4ABT_JOINT_COUNT; i++) {
+					//	skeleton_matrix.push_back(skeleton.joints[i]);
+					//}
+
+					//// 创建一个临时变量 tmp 用于保存关节点数据
+					//// 把 skeleton_matrix 的节点 3D 位置赋值给 tmp
+					//// 这里把 tmp(i, j) 中的 i 作为了 X、Y、Z，未来可能需要做优化
+					//Eigen::Matrix3Xf tmp;
+					//tmp.resize(3, skeleton_matrix.size());
+					//for (int i = 0; i < skeleton_matrix.size(); i++) {
+					//	tmp(0, i) = skeleton_matrix.at(i).position.xyz.x;
+					//	tmp(1, i) = skeleton_matrix.at(i).position.xyz.y;
+					//	tmp(2, i) = skeleton_matrix.at(i).position.xyz.z;
+					//}
+
+					//// 使用 TrackerProcessor 成员变量旋转矩阵对 tmp 进行旋转
+					//Eigen::Matrix3f view_rotation;
+					//view_rotation << 1, 0, 0, 0, -0.1736, 0.9848, 0, -0.9848, -0.1736;
+					//tmp = view_rotation * tmp;
+
+					//// 计算平移量
+					//// mHasShift 相当于开关，保证计算平移量的逻辑只进行一次。
+					//if (!has_shifted) {
+					//	float sumX = 0;  // 用于保存所有节点的 X 值的和
+					//	float sumY = 0;  // 用于保存所有节点的 Y 值的和
+					//	float minZ = 9999;  // 用于保存所有节点的 Z 值得最小值
+					//	for (int i = 0; i < tmp.cols(); i++) {
+					//		sumX += tmp(0, i);
+					//		sumY += tmp(1, i);
+
+					//		if (minZ > tmp(2, i)) {
+					//			minZ = tmp(2, i);
+					//		}
+					//	}
+					//	shift_vector << -sumX / skeleton_matrix.size(), -sumY / skeleton_matrix.size(), -minZ;  // 该平移矩阵是：-X平均值、-Y平均值、-Z最小值
+					//	// 关闭开关，该代码块的逻辑不会再调用
+					//	has_shifted = true;
+					//}
+
+					//// 依次给每个列向量加上位移量
+					//// 可优化
+					//for (int i = 0; i < tmp.cols(); i++) {
+					//	tmp(0, i) += shift_vector(0);
+					//	tmp(1, i) += shift_vector(1);
+					//	tmp(2, i) += shift_vector(2);
+					//}
+
+					//// 用已经进行了旋转和平移的临时变量 tmp 对 skeleton_matrix 进行重新赋值
+					//// 仅仅是坐标值，四元数等信息并没有经过调整
+					//for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++) {
+					//	skeleton.joints[i].position.xyz.x = tmp(0, i);
+					//	skeleton.joints[i].position.xyz.y = tmp(1, i);
+					//	skeleton.joints[i].position.xyz.z = tmp(2, i);
+					//}
+
+					//// Am I really need this???
+					//// enhanceWaistTwisted(&skeleton);
+
+					//// OK, set strings data.
+					//std::stringstream ss;
+					//for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+					//{
+					//	k4a_float3_t position = skeleton.joints[i].position;
+					//	ss << position.xyz.x << " " << position.xyz.y << " " << position.xyz.z << ", ";
+					//}
+					//ss << "| ";
+					//for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+					//{
+					//	k4a_quaternion_t orientation = skeleton.joints[i].orientation;
+					//	//k4a_quaternion_t orientation = skeleton_matrix[i].orientation;
+					//	//ss << orientation.wxyz.w << " " << orientation.wxyz.x << " " << orientation.wxyz.y << " " << orientation.wxyz.z << ", ";
+					//	Eigen::Quaternionf result = Eigen::Quaternionf(view_rotation) * Eigen::Quaternionf(orientation.wxyz.w, orientation.wxyz.x, orientation.wxyz.y, orientation.wxyz.z);
+					//	ss << result.coeffs()(3, 0) << " ";
+					//	ss << result.coeffs()(0, 0) << " ";
+					//	ss << result.coeffs()(1, 0) << " ";
+					//	ss << result.coeffs()(2, 0) << ", ";
+					//}
+					//ss << " | 0,";
+			}
+			else if (skeleton_result == K4A_RESULT_FAILED)
+			{
+				printf("Error! Get body skeleton failed!\n");
+			}
+		}
+		k4abt_frame_release(body_frame);
+	}
+	else if (pop_frame_result == K4A_WAIT_RESULT_TIMEOUT)
+	{
+		//  It should never hit timeout when K4A_WAIT_INFINITE is set.
+		printf("Error! Pop body frame result timeout!\n");
+	}
+	else
+	{
+		printf("Pop body frame result failed!\n");
+	}
+
+	//k4a_image_t body_index_map = k4abt_frame_get_body_index_map(body_frame);
+	//if (pBodyIndex == NULL)
+	//{
+	//	pBodyIndex = new BYTE[nDepthFrameHeight * nDepthFrameWidth];
+	//}
+	//UINT nBufferSize = nDepthFrameHeight * nDepthFrameWidth;
+	//pBodyIndex
+	//hr = pBodyIndexFrame->CopyFrameDataToArray(nBufferSize, pBodyIndex);
+	
+	
+}
+
+void AzureKinectCapture::GetBodyIndexFrame(k4a_capture_t& capture)
+{
+	//IBodyIndexFrameReference* pBodyIndexFrameReference = NULL;
+	//IBodyIndexFrame* pBodyIndexFrame = NULL;
+	//pMultiFrame->get_BodyIndexFrameReference(&pBodyIndexFrameReference);
+	//HRESULT hr = pBodyIndexFrameReference->AcquireFrame(&pBodyIndexFrame);
+
+
+	//if (SUCCEEDED(hr))
+	//{
+	//	if (pBodyIndex == NULL)
+	//	{
+	//		pBodyIndex = new BYTE[nDepthFrameHeight * nDepthFrameWidth];
+	//	}
+
+	//	UINT nBufferSize = nDepthFrameHeight * nDepthFrameWidth;
+	//	hr = pBodyIndexFrame->CopyFrameDataToArray(nBufferSize, pBodyIndex);
+	//}
+
+	//SafeRelease(pBodyIndexFrame);
+	//SafeRelease(pBodyIndexFrameReference);
 }
 
 void AzureKinectCapture::UpdateDepthPointCloud()

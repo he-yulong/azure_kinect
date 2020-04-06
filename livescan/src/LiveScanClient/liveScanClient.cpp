@@ -635,24 +635,24 @@ void LiveScanClient::SendFrame(vector<Point3s> vertices, vector<RGB> RGB, vector
 
 		for (int j = 0; j < nJoints; j++)
 		{
-			////Joint
-			//memcpy(buffer.data() + pos, &body[i].vJoints[j].JointType, sizeof(JointType));
-			//pos += sizeof(JointType);
+			//Joint
+			memcpy(buffer.data() + pos, &body[i].vJoints[j].JointType, sizeof(JointType));
+			pos += sizeof(JointType);
 			//memcpy(buffer.data() + pos, &body[i].vJoints[j].TrackingState, sizeof(TrackingState));
 			//pos += sizeof(TrackingState);
-			////Joint position
-			//memcpy(buffer.data() + pos, &body[i].vJoints[j].Position.X, sizeof(float));
-			//pos += sizeof(float);
-			//memcpy(buffer.data() + pos, &body[i].vJoints[j].Position.Y, sizeof(float));
-			//pos += sizeof(float);
-			//memcpy(buffer.data() + pos, &body[i].vJoints[j].Position.Z, sizeof(float));
-			//pos += sizeof(float);
+			//Joint position
+			memcpy(buffer.data() + pos, &body[i].vJoints[j].position.xyz.x, sizeof(float));
+			pos += sizeof(float);
+			memcpy(buffer.data() + pos, &body[i].vJoints[j].position.xyz.y, sizeof(float));
+			pos += sizeof(float);
+			memcpy(buffer.data() + pos, &body[i].vJoints[j].position.xyz.z, sizeof(float));
+			pos += sizeof(float);
 
-			////JointInColorSpace
-			//memcpy(buffer.data() + pos, &body[i].vJointsInColorSpace[j].X, sizeof(float));
-			//pos += sizeof(float);
-			//memcpy(buffer.data() + pos, &body[i].vJointsInColorSpace[j].Y, sizeof(float));
-			//pos += sizeof(float);
+			//JointInColorSpace
+			memcpy(buffer.data() + pos, &body[i].vJointsInColorSpace[j].X, sizeof(float));
+			pos += sizeof(float);
+			memcpy(buffer.data() + pos, &body[i].vJointsInColorSpace[j].Y, sizeof(float));
+			pos += sizeof(float);
 		}
 	}
 

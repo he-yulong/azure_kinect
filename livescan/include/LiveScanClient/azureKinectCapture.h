@@ -30,4 +30,6 @@ private:
 	k4a_transformation_t transformation = NULL;
 
 	void UpdateDepthPointCloud();
+	void GetBodyFrame(k4a_capture_t& capture);
+	void GetBodyIndexFrame(k4a_capture_t& capture);
 };
