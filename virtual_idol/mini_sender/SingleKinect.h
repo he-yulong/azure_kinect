@@ -75,5 +75,11 @@ namespace ws_tech
 
 		void quaternionToRotationVector(int node_id, Eigen::Quaterniond q, Eigen::Vector3f& result);
 
+		void sendOrientation();
+		void sendPosition();
+		void sendNULL();
+
+		
+		Eigen::Vector3f shift_vector;  // 用于视角平移
 	};
 }

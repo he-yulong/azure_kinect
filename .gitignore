@@ -76,3 +76,6 @@
 /virtual_idol/x64/Release/build/runner
 /livescan/LiveScanClient
 /virtual_idol/x64/Release
+/virtual_idol/mini_sender/dnn_model_2_0.onnx
+/virtual_idol/.vs/virtual_idol/DesignTimeBuild
+/virtual_idol/mini_sender/x64/Release

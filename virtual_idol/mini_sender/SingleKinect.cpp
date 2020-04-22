@@ -415,6 +415,136 @@ void ws_tech::SingleKinect::quaternionToRotationVector(int node_id, Eigen::Quate
 	//return axis_mul_angle;
 }
 
+// 只发送四元数的逻辑
+void ws_tech::SingleKinect::sendOrientation()
+{
+	// OK, set strings data.
+	std::stringstream ss;
+	Eigen::Vector3f result{};
+
+	auto wxyz = skeleton.joints[0].orientation.wxyz;
+	// 注意 eigen Quaterniond 类四元数初始化参数顺序为 w,x,y,z
+	Eigen::Quaterniond q_root = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
+
+	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+	{
+		auto wxyz = skeleton.joints[i].orientation.wxyz;
+
+		//Eigen::Quaterniond q = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
+		////q = q_root.inverse() * q;  // 深度相机坐标系->模型坐标系
+		//quaternionToRotationVector(i, q, result);
+		//ss << result[0] << " ";
+		//ss << result[1] << " ";
+		//ss << result[2] << ", ";
+
+		ss << wxyz.x << " ";
+		ss << wxyz.y << " ";
+		ss << wxyz.z << " ";
+		ss << wxyz.w << ", ";
+	}
+
+	Sleep(50);
+	// Send results with UDP
+	udp_sender.Send(ss.str());
+	std::cout << "--------------------------------------------------------" << std::endl;
+}
+
+// 只发送位置坐标 XYZ 的逻辑
+void ws_tech::SingleKinect::sendPosition()
+{
+
+	// Successfully get skeleton for the i-th person. Start processing.
+	std::vector<k4abt_joint_t> skeleton_matrix;
+	// 把 BodyTracking API 算出的关节点数据放到了 skeleton_matrix 中
+	// skeleton_matrix 是 vector<k4abt_joint_t> 类型的成员变量
+	for (int i = 0; i < K4ABT_JOINT_COUNT; i++) {
+		skeleton_matrix.push_back(skeleton.joints[i]);
+	}
+
+	// 创建一个临时变量 tmp 用于保存关节点数据
+	// 把 skeleton_matrix 的节点 3D 位置赋值给 tmp
+	// 这里把 tmp(i, j) 中的 i 作为了 X、Y、Z，未来可能需要做优化
+	Eigen::Matrix3Xf tmp;
+	tmp.resize(3, skeleton_matrix.size());
+	for (int i = 0; i < skeleton_matrix.size(); i++) {
+		tmp(0, i) = skeleton_matrix.at(i).position.xyz.x;
+		tmp(1, i) = skeleton_matrix.at(i).position.xyz.y;
+		tmp(2, i) = skeleton_matrix.at(i).position.xyz.z;
+	}
+
+	// 使用 TrackerProcessor 成员变量旋转矩阵对 tmp 进行旋转
+	Eigen::Matrix3f view_rotation;
+	view_rotation << 1, 0, 0, 0, -0.1736, 0.9848, 0, -0.9848, -0.1736;
+	tmp = view_rotation * tmp;
+
+	// 计算平移量
+	// mHasShift 相当于开关，保证计算平移量的逻辑只进行一次。
+	if (!has_shifted) {
+		float sumX = 0;  // 用于保存所有节点的 X 值的和
+		float sumY = 0;  // 用于保存所有节点的 Y 值的和
+		float minZ = 9999;  // 用于保存所有节点的 Z 值得最小值
+		for (int i = 0; i < tmp.cols(); i++) {
+			sumX += tmp(0, i);
+			sumY += tmp(1, i);
+
+			if (minZ > tmp(2, i)) {
+				minZ = tmp(2, i);
+			}
+		}
+		shift_vector << -sumX / skeleton_matrix.size(), -sumY / skeleton_matrix.size(), -minZ;  // 该平移矩阵是：-X平均值、-Y平均值、-Z最小值
+		// 关闭开关，该代码块的逻辑不会再调用
+		has_shifted = true;
+	}
+
+	// 依次给每个列向量加上位移量
+	// 可优化
+	for (int i = 0; i < tmp.cols(); i++) {
+		tmp(0, i) += shift_vector(0);
+		tmp(1, i) += shift_vector(1);
+		tmp(2, i) += shift_vector(2);
+	}
+
+	//-------------------------------------
+	// 非常不高效，仅仅为了方便理解
+	//-------------------------------------
+	// 用已经进行了旋转和平移的临时变量 tmp 对 skeleton_matrix 进行重新赋值
+	// 仅仅是坐标值，四元数等信息并没有经过调整
+	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++) {
+		skeleton.joints[i].position.xyz.x = tmp(0, i);
+		skeleton.joints[i].position.xyz.y = tmp(1, i);
+		skeleton.joints[i].position.xyz.z = tmp(2, i);
+	}
+
+	// OK, set strings data.
+	std::stringstream ss;
+	Eigen::Vector3f result{};
+
+	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+	{
+		auto xyz = skeleton.joints[i].position.xyz;
+
+		ss << xyz.x << " ";
+		ss << xyz.y << " ";
+		ss << xyz.z << ", ";
+	}
+
+	//Sleep(50);
+	// Send results with UDP
+	udp_sender.Send(ss.str());
+	std::cout << "--------------------------------------------------------" << std::endl;
+}
+
+// 发送提示没有检测到人的信号
+void ws_tech::SingleKinect::sendNULL()
+{
+	// OK, set strings data.
+	std::stringstream ss;
+	ss << "0";
+	// Send results with UDP
+	udp_sender.Send(ss.str());
+	std::cout << "--------------------------------------------------------" << std::endl;
+}
+
 // 姿态识别的核心处理逻辑
 void ws_tech::SingleKinect::processBodyFrame()
 {
@@ -435,6 +565,7 @@ void ws_tech::SingleKinect::processBodyFrame()
 
 	if (num_bodies <= 0)
 	{
+		sendNULL();
 		return;  // 如果检测不到人，则什么也不做
 	}
 
@@ -442,35 +573,8 @@ void ws_tech::SingleKinect::processBodyFrame()
 
 	if (skeleton_result == K4A_RESULT_SUCCEEDED)
 	{
-		// OK, set strings data.
-		std::stringstream ss;
-		Eigen::Vector3f result{};
-		
-		auto wxyz = skeleton.joints[0].orientation.wxyz;
-		// 注意 eigen Quaterniond 类四元数初始化参数顺序为 w,x,y,z
-		Eigen::Quaterniond q_root = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
-
-		for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
-		{
-			auto wxyz = skeleton.joints[i].orientation.wxyz;
-
-			//Eigen::Quaterniond q = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
-			////q = q_root.inverse() * q;  // 深度相机坐标系->模型坐标系
-			//quaternionToRotationVector(i, q, result);
-			//ss << result[0] << " ";
-			//ss << result[1] << " ";
-			//ss << result[2] << ", ";
-
-			ss << wxyz.x << " ";
-			ss << wxyz.y << " ";
-			ss << wxyz.z << " ";
-			ss << wxyz.w << ", ";
-		}
-
-		Sleep(50);
-		// Send results with UDP
-		udp_sender.Send(ss.str());
-		std::cout << "--------------------------------------------------------" << std::endl;
+		//sendOrientation();
+		sendPosition();
 
 
 		//// Successfully get skeleton for the i-th person. Start processing.
