@@ -1,7 +1,7 @@
 #include "SingleKinect.h"
 
 // 初始化私有成员
-ws_tech::SingleKinect::SingleKinect(int device_index_val, std::string ip_addr, int udp_port) :
+ws_tech::SingleKinect::SingleKinect(int device_index_val, std::string ip_addr, int udp_port, std::string udp_format) :
 	device_index(device_index_val),
 	device(nullptr),
 	device_config(K4A_DEVICE_CONFIG_INIT_DISABLE_ALL),
@@ -28,6 +28,41 @@ ws_tech::SingleKinect::SingleKinect(int device_index_val, std::string ip_addr, i
 	rotation_matrix_type4 << 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1;
 	rotation_matrix_type5 << 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1;
 	rotation_matrix_type6 << 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1;
+
+	if (udp_format == "kinect")
+	{
+		UDP_MAP_LEN = (int)K4ABT_JOINT_COUNT;
+		udp_map = new int[UDP_MAP_LEN];
+		for (int i = 0; i < UDP_MAP_LEN; i++)
+		{
+			udp_map[i] = i;
+		}
+	}
+	else if (udp_format == "unity")
+	{
+		UDP_MAP_LEN = 17;
+		udp_map = new int[UDP_MAP_LEN]{
+			0,  // Hip
+			22, // RHip
+			23, // RKnee
+			24, // RFoot
+			18, // LHip
+			19, // LKnee
+			20, // LFoot
+			1,  // Spine
+			2,  // Thorax/Chest
+			3,  // Neck/Nose
+			26, // Head
+			5,  // LShoulder
+			6,  // LElbow
+			7,  // LWrist
+			12, // RShoulder
+			13, // RElbow
+			14, // RWrist
+		};
+		std::cout << "udp_format: unity" << std::endl;
+
+	}
 }
 
 // 打开并启动 Kinect
@@ -426,9 +461,9 @@ void ws_tech::SingleKinect::sendOrientation()
 	// 注意 eigen Quaterniond 类四元数初始化参数顺序为 w,x,y,z
 	Eigen::Quaterniond q_root = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
 
-	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+	for (int i = 0; i < UDP_MAP_LEN; i++)
 	{
-		auto wxyz = skeleton.joints[i].orientation.wxyz;
+		auto wxyz = skeleton.joints[udp_map[i]].orientation.wxyz;
 
 		//Eigen::Quaterniond q = Eigen::Quaterniond(wxyz.w, wxyz.x, wxyz.y, wxyz.z);
 		////q = q_root.inverse() * q;  // 深度相机坐标系->模型坐标系
@@ -449,6 +484,15 @@ void ws_tech::SingleKinect::sendOrientation()
 	std::cout << "--------------------------------------------------------" << std::endl;
 }
 
+// W, X, Y, Z
+std::string q0 = "1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0";
+std::string q1 = "0.52578104,0.28398842,-0.045088585,-0.8005448,0.5062444,0.2865827,-0.060081635,-0.81115794,0.24238873,0.69895375,-0.22648762, -0.63357294, 0.47243986, 0.57754135, -0.17229918, -0.64308596, 0.52046514, 0.25757676, -0.04867726, -0.8126505, 0.5106523, 0.27476117, -0.06542535, -0.81207144, 0.532599, 0.31141913, -0.07930574, -0.782986, 0.5343164, 0.26835498, -0.04704112, -0.8001741, 0.06989027, 0.2383981, 0.28540525, -0.9256487, 0.38054848, -0.08494649, -0.4517442, 0.8024301, 0.5346426, 0.27560577, -0.049911756, -0.79731274, 0.036649574, 0.15141322, 0.25205135, -0.9550921, 0.40300727, 0.0440083, -0.4857432, 0.7744043, 0.52717006, 0.28184277, -0.051829185, -0.7999814, 0.24497518, 0.025500529, 0.2713471, -0.9304341, 0.13351221, 0.26122046, -0.42089185, 0.8583638";
+std::string q2 = "0.62723374,0.6019349,-0.20041622,-0.4517583,0.6212098,0.5947515,-0.20709184,-0.4663497,0.009721586,0.9706215,-0.1542617,-0.18439822, 0.3409674, 0.9107854, -0.22118334, -0.07272677, 0.60376316, 0.61427534, -0.22167361, -0.45716143, 0.5553373, 0.58931535, -0.24513246, -0.5331211, 0.51615715, 0.59046257, -0.25414863, -0.5659896, 0.61219096, 0.61140656, -0.21986736, -0.4506248, 0.6235144, 0.6201091, -0.23345391, -0.41496232, 0.6246734, 0.6239254, -0.23934765, -0.40399635, 0.6251237, 0.5987243, -0.20583078, -0.45649007, 0.30259854, 0.5066047, 0.16483057, -0.79032695, 0.022381756, -0.25165242, -0.5253981, 0.81248194, 0.6266796, 0.60687363, -0.21399985, -0.43952376, 0.503815, 0.26809007, 0.24354699, -0.7842085, 0.26650393, 0.12468674, 0.39770716, -0.86905575";
+std::string q3 = "0.69466394,0.34341168,-0.2726511,-0.57023835,0.6940851,0.34524855,-0.24561915,-0.581997,0.33753997,0.712582,-0.41457322,-0.45433763, 0.5235827, 0.5796062, -0.3262748, -0.5324121, 0.7016831, 0.3364952, -0.2618767, -0.57081723, 0.38592944, 0.47714022, -0.04179838, -0.78844696, 0.1477244, -0.48099247, -0.11851301, 0.85602474, 0.69998235, 0.34719247, -0.27117217, -0.5620925, 0.618571, 0.32333276, -0.27056387, -0.66303927, 0.6389377, 0.35745072, -0.2531228, -0.63238955, 0.6874362, 0.3455693, -0.29151696, -0.56835836, 0.6988539, 0.3574183, -0.32645875, -0.52657384, 0.72878385, 0.35058603, -0.36336628, -0.46252403, 0.69250596, 0.34236813, -0.28182796, -0.5690277,0.6867542, 0.36427283, -0.37219083, -0.5070975, 0.7101368, 0.40492564, -0.33196542, -0.47068015";
+std::string q4 = "0.54243386,0.54288524,-0.38876468,-0.5098069,0.5282929,0.5700863,-0.38916767,-0.4944259,0.5687773,0.5828117,-0.3760004,-0.44209358, 0.60532665, 0.5150642, -0.36642218, -0.48375952, 0.5555987, 0.534747, -0.37399366, -0.5152519, 0.27683187, 0.6940386, -0.08785321, -0.6587536, 0.28548253, -0.5902222, -0.25389215, 0.7111093, 0.53932047, 0.54168516, -0.38726476, -0.51549643, 0.35222575, 0.5768496, 0.010030345, -0.73694026, 0.0643611, -0.4927622, -0.39079055, 0.774807, 0.5510162, 0.52404857, -0.3870758, -0.52146584, 0.2983025, 0.5217664, -0.019263607, -0.7990021, 0.0070285806, 0.34172133, 0.4258301, -0.8377624, 0.52404237, 0.5444992, -0.4071214, -0.5129838, 0.50012493, 0.51711416, -0.43222663, -0.5437354, 0.50690293, 0.5109519, -0.36370435, -0.59135157";
+std::string q5 = "0.61365306,0.58119035,-0.33387318,-0.4173443,0.62565786,0.5560621,-0.326219,-0.439236,0.38080093,0.7585819,-0.37155035,-0.3761577, 0.5175188, 0.65186006, -0.36216328, -0.41963142, 0.6254131, 0.5660417, -0.32961532, -0.4240388, 0.5187623, 0.5657413, -0.3665619, -0.5257897, 0.51648253, 0.58466613, -0.42038578, -0.46334323, 0.6162857, 0.59250313, -0.31541118, -0.4118833, 0.5910981, 0.56006616, -0.37176767, -0.44577748, 0.6270303, 0.58700734, -0.37629429, -0.3473585, 0.6180801, 0.5812291, -0.32182488, -0.42021242, 0.6169684, 0.61067384, -0.3111763, -0.38677734, 0.631353, 0.63225716, -0.2968066, -0.33697197, 0.61032236, 0.5912333, -0.31563696, -0.42228308, 0.6087138, 0.5858875, -0.31928346, -0.42925704, 0.6208151, 0.59941566, -0.2963393, -0.40923396";
+
+
 // 只发送位置坐标 XYZ 的逻辑
 void ws_tech::SingleKinect::sendPosition()
 {
@@ -457,7 +501,7 @@ void ws_tech::SingleKinect::sendPosition()
 	std::vector<k4abt_joint_t> skeleton_matrix;
 	// 把 BodyTracking API 算出的关节点数据放到了 skeleton_matrix 中
 	// skeleton_matrix 是 vector<k4abt_joint_t> 类型的成员变量
-	for (int i = 0; i < K4ABT_JOINT_COUNT; i++) {
+	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++) {
 		skeleton_matrix.push_back(skeleton.joints[i]);
 	}
 
@@ -509,28 +553,129 @@ void ws_tech::SingleKinect::sendPosition()
 	//-------------------------------------
 	// 用已经进行了旋转和平移的临时变量 tmp 对 skeleton_matrix 进行重新赋值
 	// 仅仅是坐标值，四元数等信息并没有经过调整
-	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++) {
-		skeleton.joints[i].position.xyz.x = tmp(0, i);
-		skeleton.joints[i].position.xyz.y = tmp(1, i);
-		skeleton.joints[i].position.xyz.z = tmp(2, i);
+	for (int i = 0; i < UDP_MAP_LEN; i++) {
+		skeleton.joints[udp_map[i]].position.xyz.x = tmp(0, udp_map[i]);
+		skeleton.joints[udp_map[i]].position.xyz.y = tmp(1, udp_map[i]);
+		skeleton.joints[udp_map[i]].position.xyz.z = tmp(2, udp_map[i]);
 	}
 
 	// OK, set strings data.
 	std::stringstream ss;
 	Eigen::Vector3f result{};
 
-	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++)
+	// 传输顺序没有问题
+	for (int i = 0; i < UDP_MAP_LEN; i++)
 	{
-		auto xyz = skeleton.joints[i].position.xyz;
+		auto xyz = skeleton.joints[udp_map[i]].position.xyz;
 
-		ss << xyz.x << " ";
-		ss << xyz.y << " ";
-		ss << xyz.z << ", ";
+		ss << xyz.x << ",";
+		ss << xyz.y << ",";
+		ss << xyz.z;
+		if (i != UDP_MAP_LEN - 1)
+		{
+			ss << ",";
+		}
 	}
+
+	ss << "," << q1 << "," << q2;
 
 	//Sleep(50);
 	// Send results with UDP
 	udp_sender.Send(ss.str());
+	//std::cout << ss.str() << std::endl;
+	std::cout << "--------------------------------------------------------" << std::endl;
+}
+
+// 只发送位置坐标 XYZ 的逻辑
+void ws_tech::SingleKinect::sendSMPLTheta()
+{
+
+	// Successfully get skeleton for the i-th person. Start processing.
+	std::vector<k4abt_joint_t> skeleton_matrix;
+	// 把 BodyTracking API 算出的关节点数据放到了 skeleton_matrix 中
+	// skeleton_matrix 是 vector<k4abt_joint_t> 类型的成员变量
+	for (int i = 0; i < (int)K4ABT_JOINT_COUNT; i++) {
+		skeleton_matrix.push_back(skeleton.joints[i]);
+	}
+
+	// 创建一个临时变量 tmp 用于保存关节点数据
+	// 把 skeleton_matrix 的节点 3D 位置赋值给 tmp
+	// 这里把 tmp(i, j) 中的 i 作为了 X、Y、Z，未来可能需要做优化
+	Eigen::Matrix3Xf tmp;
+	tmp.resize(3, skeleton_matrix.size());
+	for (int i = 0; i < skeleton_matrix.size(); i++) {
+		tmp(0, i) = skeleton_matrix.at(i).position.xyz.x;
+		tmp(1, i) = skeleton_matrix.at(i).position.xyz.y;
+		tmp(2, i) = skeleton_matrix.at(i).position.xyz.z;
+	}
+
+	// 使用 TrackerProcessor 成员变量旋转矩阵对 tmp 进行旋转
+	Eigen::Matrix3f view_rotation;
+	view_rotation << 1, 0, 0, 0, -0.1736, 0.9848, 0, -0.9848, -0.1736;
+	tmp = view_rotation * tmp;
+
+	// 计算平移量
+	// mHasShift 相当于开关，保证计算平移量的逻辑只进行一次。
+	if (!has_shifted) {
+		float sumX = 0;  // 用于保存所有节点的 X 值的和
+		float sumY = 0;  // 用于保存所有节点的 Y 值的和
+		float minZ = 9999;  // 用于保存所有节点的 Z 值得最小值
+		for (int i = 0; i < tmp.cols(); i++) {
+			sumX += tmp(0, i);
+			sumY += tmp(1, i);
+
+			if (minZ > tmp(2, i)) {
+				minZ = tmp(2, i);
+			}
+		}
+		shift_vector << -sumX / skeleton_matrix.size(), -sumY / skeleton_matrix.size(), -minZ;  // 该平移矩阵是：-X平均值、-Y平均值、-Z最小值
+		// 关闭开关，该代码块的逻辑不会再调用
+		has_shifted = true;
+	}
+
+	// 依次给每个列向量加上位移量
+	// 可优化
+	for (int i = 0; i < tmp.cols(); i++) {
+		tmp(0, i) += shift_vector(0);
+		tmp(1, i) += shift_vector(1);
+		tmp(2, i) += shift_vector(2);
+	}
+
+	//-------------------------------------
+	// 非常不高效，仅仅为了方便理解
+	//-------------------------------------
+	// 用已经进行了旋转和平移的临时变量 tmp 对 skeleton_matrix 进行重新赋值
+	// 仅仅是坐标值，四元数等信息并没有经过调整
+	for (int i = 0; i < UDP_MAP_LEN; i++) {
+		skeleton.joints[udp_map[i]].position.xyz.x = tmp(0, udp_map[i]);
+		skeleton.joints[udp_map[i]].position.xyz.y = tmp(1, udp_map[i]);
+		skeleton.joints[udp_map[i]].position.xyz.z = tmp(2, udp_map[i]);
+	}
+
+	// OK, set strings data.
+	std::stringstream ss;
+	Eigen::Vector3f result{};
+
+	// 传输顺序没有问题
+	for (int i = 0; i < UDP_MAP_LEN; i++)
+	{
+		auto xyz = skeleton.joints[udp_map[i]].position.xyz;
+
+		ss << xyz.x << ",";
+		ss << xyz.y << ",";
+		ss << xyz.z;
+		if (i != UDP_MAP_LEN - 1)
+		{
+			ss << ",";
+		}
+	}
+
+	ss << "," << q1 << "," << q2;
+
+	//Sleep(50);
+	// Send results with UDP
+	udp_sender.Send(ss.str());
+	//std::cout << ss.str() << std::endl;
 	std::cout << "--------------------------------------------------------" << std::endl;
 }
 
@@ -574,7 +719,8 @@ void ws_tech::SingleKinect::processBodyFrame()
 	if (skeleton_result == K4A_RESULT_SUCCEEDED)
 	{
 		//sendOrientation();
-		sendPosition();
+		//sendPosition();
+		sendSMPLTheta();  // 使用 IK 根据 position --> 计算 theta
 
 
 		//// Successfully get skeleton for the i-th person. Start processing.

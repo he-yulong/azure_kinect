@@ -18,7 +18,8 @@ namespace ws_tech
 	class SingleKinect
 	{
 	public:
-		SingleKinect(int device_index_val = 0, std::string ip_addr = "127.0.0.1", int udp_port = 8999);
+		SingleKinect(int device_index_val = 0, std::string ip_addr = "127.0.0.1",
+			int udp_port = 8999, std::string udp_format = "kinect");
 		void Open();
 		void Running(int max_frame = 2000);
 		void Close();
@@ -77,9 +78,12 @@ namespace ws_tech
 
 		void sendOrientation();
 		void sendPosition();
+		void sendSMPLTheta();
 		void sendNULL();
 
 		
 		Eigen::Vector3f shift_vector;  // 用于视角平移
+		int* udp_map; // 用于 UDP 发送指定关键点
+		int UDP_MAP_LEN; // udp_map 数组长度
 	};
 }

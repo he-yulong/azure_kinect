@@ -15,7 +15,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "eigen_test", "eigen_test\ei
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mini_sender", "mini_sender\mini_sender.vcxproj", "{CBBDA63B-C0B7-463E-98C3-24BCE83D63EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rotation_demo", "rotation_demo\rotation_demo.csproj", "{2A256992-9C05-48BF-BC86-95543E9AA7CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rotation_demo", "rotation_demo\rotation_demo.csproj", "{2A256992-9C05-48BF-BC86-95543E9AA7CB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smplh", "smplh\smplh.vcxproj", "{8E3C2E91-766E-4A25-BAFB-9E014B79D180}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +101,16 @@ Global
 		{2A256992-9C05-48BF-BC86-95543E9AA7CB}.Release|x64.Build.0 = Release|Any CPU
 		{2A256992-9C05-48BF-BC86-95543E9AA7CB}.Release|x86.ActiveCfg = Release|Any CPU
 		{2A256992-9C05-48BF-BC86-95543E9AA7CB}.Release|x86.Build.0 = Release|Any CPU
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Debug|x64.ActiveCfg = Debug|x64
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Debug|x64.Build.0 = Debug|x64
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Debug|x86.Build.0 = Debug|Win32
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Release|Any CPU.ActiveCfg = Release|Win32
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Release|x64.ActiveCfg = Release|x64
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Release|x64.Build.0 = Release|x64
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Release|x86.ActiveCfg = Release|Win32
+		{8E3C2E91-766E-4A25-BAFB-9E014B79D180}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
